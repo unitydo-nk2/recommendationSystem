@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
 from fuzzywuzzy import process
 
-user_category_ranking_df = pd.read_csv(os.getcwd()+"/userCategoryRank.csv")
-activities_df = pd.read_csv(os.getcwd()+"/activityWithCategoryView.csv")
+user_category_ranking_df = pd.read_csv(os.getcwd()+"/userCategoryRankings.csv")
+activities_df = pd.read_csv(os.getcwd()+"/activityWithCategory.csv")
 
 ranking_df = pd.merge(user_category_ranking_df, activities_df, left_on='mainCategoryId', right_on='mainCategoryId')
 ranking_df = ranking_df.drop_duplicates(['userId', 'activityId'])
