@@ -1,13 +1,14 @@
 from flask import Flask
-from recommendationSystem import recommender_engine
+from recommendationSystem import get_recommend
 
 app = Flask(__name__)
 
-@app.route('/api/getRecommends/<int:user_id>', methods=['GET'])
+@app.route('/api/recommendActivities/<int:user_id>', methods=['GET'])
 def getRecommendActivity(user_id):
-    print("Recommendation for user called")
-    return recommender_engine(user_id)
-
+    return get_recommend(user_id)
+@app.route('/', methods=['GET'])
+def run():
+    return "{\"message\": \"Hello World!\""
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int("3000"), debug=True)

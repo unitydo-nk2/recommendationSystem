@@ -21,18 +21,19 @@ cf_knn_model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=
 # Fitting the model on our matrix
 cf_knn_model.fit(user_item_matrix)
 
-
-def recommender_engine(user_id):
+def recommender_engine(user_id, matrix, cf_model):
     # Fit model on matrix
-    cf_knn_model.fit(user_item_matrix)
+    cf_knn_model.fit(matrix)
 
     # Check if the user ID exists in the index of the matrix
-    if user_id not in user_item_matrix.columns:
+    if user_id not in matrix.columns:
         print(f"User ID {user_id} not found in the matrix.")
         return None
 
     # Calculate neighbor distances based on user preferences
-    distances, indices = cf_knn_model.kneighbors(user_item_matrix.loc[:, user_id].values.reshape(1, -1), n_neighbors=10)
+    # distances, indices = cf_model.kneighbors(matrix.loc[:, user_id].values.reshape(1, -1), n_neighbors=10)
+    distances, indices = cf_model.kneighbors(matrix.iloc[[user_id]], n_neighbors=10)
+    # distances, indices = cf_model.kneighbors(matrix[user_id].to_frame().transpose(), n_neighbors=10)
 
     user_rec_ids = sorted(list(zip(indices.squeeze().tolist(), distances.squeeze().tolist())), key=lambda x: x[1])
 
@@ -49,3 +50,5 @@ def recommender_engine(user_id):
     recommendations = df.to_dict(orient='records')
     return recommendations
 
+def get_recommend(user_id):
+    return recommender_engine(user_id,user_item_matrix,cf_knn_model)
