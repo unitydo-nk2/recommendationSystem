@@ -1,5 +1,5 @@
-# Use the latest Python version available
-FROM python:latest
+# Use a Python version that supports the package requirements
+FROM python:3.9
 
 # Set the working directory in the container
 WORKDIR /app
