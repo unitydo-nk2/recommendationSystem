@@ -1,39 +1,25 @@
-import os
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.neighbors import NearestNeighbors
-from fuzzywuzzy import process
+from DBConnection import get_activitywithcategoryview, get_usercategoryrankingview
 
-user_category_ranking_df = pd.read_csv(os.getcwd()+"/upload/userCategoryRankings.csv")
-activities_df = pd.read_csv(os.getcwd()+"/upload/activityWithCategory.csv")
+def recommender_engine(user_id, cf_model):
+    user_category_ranking_df = get_usercategoryrankingview()
+    activities_df = get_activitywithcategoryview()
 
-ranking_df = pd.merge(user_category_ranking_df, activities_df, left_on='mainCategoryId', right_on='mainCategoryId')
-ranking_df = ranking_df.drop_duplicates(['userId', 'activityId'])
+    ranking_df = pd.merge(user_category_ranking_df, activities_df, left_on='mainCategoryId', right_on='mainCategoryId')
+    ranking_df = ranking_df.drop_duplicates(['userId', 'activityId'])
 
-user_item_matrix = (ranking_df.pivot(index=['userId'], columns=['activityId'], values='categoryRank').fillna(0)
-                    .transpose())
+    user_item_matrix = (ranking_df.pivot(index='userId', columns='activityId', values='categoryRank').fillna(0))
 
-# cosine similarity
-# Define a KNN model on cosine similarity
-cf_knn_model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=10, n_jobs=-1)
-
-# Fitting the model on our matrix
-cf_knn_model.fit(user_item_matrix)
-
-def recommender_engine(user_id, matrix, cf_model):
     # Fit model on matrix
-    cf_knn_model.fit(matrix)
+    cf_model.fit(user_item_matrix)
 
-    # Check if the user ID exists in the index of the matrix
-    if user_id not in matrix.columns:
+    if user_id not in user_item_matrix.index:
         print(f"User ID {user_id} not found in the matrix.")
         return None
 
-    # Calculate neighbor distances based on user preferences
-    # distances, indices = cf_model.kneighbors(matrix.loc[:, user_id].values.reshape(1, -1), n_neighbors=10)
-    distances, indices = cf_model.kneighbors(matrix.iloc[[user_id]], n_neighbors=10)
-    # distances, indices = cf_model.kneighbors(matrix[user_id].to_frame().transpose(), n_neighbors=10)
+    # Use loc instead of iloc to select rows based on index label
+    distances, indices = cf_model.kneighbors(user_item_matrix.loc[[user_id]], n_neighbors=10)
 
     user_rec_ids = sorted(list(zip(indices.squeeze().tolist(), distances.squeeze().tolist())), key=lambda x: x[1])
 
@@ -51,4 +37,5 @@ def recommender_engine(user_id, matrix, cf_model):
     return recommendations
 
 def get_recommend(user_id):
-    return recommender_engine(user_id,user_item_matrix,cf_knn_model)
+    cf_knn_model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=10, n_jobs=-1)
+    return recommender_engine(user_id, cf_knn_model)
